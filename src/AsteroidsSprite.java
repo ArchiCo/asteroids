@@ -7,7 +7,7 @@ import java.awt.Polygon;
   position, movement and rotation. It also can detemine if two objects collide.
 ******************************************************************************/
 
-class AsteroidsSprite {
+abstract class AsteroidsSprite {
 
   // Fields:
 
