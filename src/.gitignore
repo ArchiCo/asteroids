@@ -1,2 +1,11 @@
 /Asteroids.class
 /AsteroidsSprite.class
+/ship.class
+/Ship.class
+/Thruster.class
+/Ufo.class
+/Photon.class
+/Missle.class
+/Asteroid.class
+/Explosion.class
+/Thruster$ThrusterType.class

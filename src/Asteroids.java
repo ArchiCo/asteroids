@@ -1,5 +1,4 @@
 package src;
-
 /******************************************************************************
   Asteroids, Version 1.3
 
@@ -42,9 +41,9 @@ import java.util.*;
 import java.applet.Applet;
 import java.applet.AudioClip;
 
-
 /******************************************************************************
-  Main applet code.
+  The AsteroidsSprite class defines a game object, including it's shape,
+  position, movement and rotation. It also can detemine if two objects collide.
 ******************************************************************************/
 
 public class Asteroids extends Applet implements Runnable, KeyListener {
@@ -145,13 +144,13 @@ public class Asteroids extends Applet implements Runnable, KeyListener {
 
   // Sprite objects.
 
-  AsteroidsSprite   ship;
-  AsteroidsSprite   fwdThruster, revThruster;
-  AsteroidsSprite   ufo;
-  AsteroidsSprite   missle;
-  AsteroidsSprite[] photons    = new AsteroidsSprite[MAX_SHOTS];
-  AsteroidsSprite[] asteroids  = new AsteroidsSprite[MAX_ROCKS];
-  AsteroidsSprite[] explosions = new AsteroidsSprite[MAX_SCRAP];
+  Ship ship;
+  //AsteroidsSprite   fwdThruster, revThruster;
+  Ufo    ufo;
+  Missle missle;
+  Photon[] photons    = new Photon[MAX_SHOTS];
+  Asteroid[] asteroids  = new Asteroid[MAX_ROCKS];
+  Explosion[] explosions = new Explosion[MAX_SCRAP];
 
   // Ship data.
 
@@ -254,72 +253,31 @@ public class Asteroids extends Applet implements Runnable, KeyListener {
 
     // Create shape for the ship sprite.
 
-    ship = new AsteroidsSprite();
-    ship.shape.addPoint(0, -10);
-    ship.shape.addPoint(7, 10);
-    ship.shape.addPoint(-7, 10);
-
-    // Create shapes for the ship thrusters.
-
-    fwdThruster = new AsteroidsSprite();
-    fwdThruster.shape.addPoint(0, 12);
-    fwdThruster.shape.addPoint(-3, 16);
-    fwdThruster.shape.addPoint(0, 26);
-    fwdThruster.shape.addPoint(3, 16);
-    revThruster = new AsteroidsSprite();
-    revThruster.shape.addPoint(-2, 12);
-    revThruster.shape.addPoint(-4, 14);
-    revThruster.shape.addPoint(-2, 20);
-    revThruster.shape.addPoint(0, 14);
-    revThruster.shape.addPoint(2, 12);
-    revThruster.shape.addPoint(4, 14);
-    revThruster.shape.addPoint(2, 20);
-    revThruster.shape.addPoint(0, 14);
+    ship = new Ship();
 
     // Create shape for each photon sprites.
 
     for (i = 0; i < MAX_SHOTS; i++) {
-      photons[i] = new AsteroidsSprite();
-      photons[i].shape.addPoint(1, 1);
-      photons[i].shape.addPoint(1, -1);
-      photons[i].shape.addPoint(-1, 1);
-      photons[i].shape.addPoint(-1, -1);
+      photons[i] = new Photon();
     }
+    
+    // Create UFO object
 
-    // Create shape for the flying saucer.
-
-    ufo = new AsteroidsSprite();
-    ufo.shape.addPoint(-15, 0);
-    ufo.shape.addPoint(-10, -5);
-    ufo.shape.addPoint(-5, -5);
-    ufo.shape.addPoint(-5, -8);
-    ufo.shape.addPoint(5, -8);
-    ufo.shape.addPoint(5, -5);
-    ufo.shape.addPoint(10, -5);
-    ufo.shape.addPoint(15, 0);
-    ufo.shape.addPoint(10, 5);
-    ufo.shape.addPoint(-10, 5);
+    ufo = new Ufo();
 
     // Create shape for the guided missle.
 
-    missle = new AsteroidsSprite();
-    missle.shape.addPoint(0, -4);
-    missle.shape.addPoint(1, -3);
-    missle.shape.addPoint(1, 3);
-    missle.shape.addPoint(2, 4);
-    missle.shape.addPoint(-2, 4);
-    missle.shape.addPoint(-1, 3);
-    missle.shape.addPoint(-1, -3);
+    missle = new Missle();
 
     // Create asteroid sprites.
 
     for (i = 0; i < MAX_ROCKS; i++)
-      asteroids[i] = new AsteroidsSprite();
+      asteroids[i] = new Asteroid();
 
     // Create explosion sprites.
 
     for (i = 0; i < MAX_SCRAP; i++)
-      explosions[i] = new AsteroidsSprite();
+      explosions[i] = new Explosion();
 
     // Initialize game data and put us in 'game over' mode.
 
@@ -496,30 +454,12 @@ public class Asteroids extends Applet implements Runnable, KeyListener {
 
   public void initShip() {
 
-    // Reset the ship sprite at the center of the screen.
-
-    ship.active = true;
-    ship.angle = 0.0;
-    ship.deltaAngle = 0.0;
-    ship.x = 0.0;
-    ship.y = 0.0;
-    ship.deltaX = 0.0;
-    ship.deltaY = 0.0;
-    ship.render();
-
-    // Initialize thruster sprites.
-
-    fwdThruster.x = ship.x;
-    fwdThruster.y = ship.y;
-    fwdThruster.angle = ship.angle;
-    fwdThruster.render();
-    revThruster.x = ship.x;
-    revThruster.y = ship.y;
-    revThruster.angle = ship.angle;
-    revThruster.render();
+    // Reset the ship sprite at the center of the screen and
+    // initialize thruster sprites.
+    ship.initShip();
 
     if (loaded)
-      thrustersSound.stop();
+    thrustersSound.stop();
     thrustersPlaying = false;
     hyperCounter = 0;
   }
@@ -585,14 +525,8 @@ public class Asteroids extends Applet implements Runnable, KeyListener {
 
       // Update the thruster sprites to match the ship sprite.
 
-      fwdThruster.x = ship.x;
-      fwdThruster.y = ship.y;
-      fwdThruster.angle = ship.angle;
-      fwdThruster.render();
-      revThruster.x = ship.x;
-      revThruster.y = ship.y;
-      revThruster.angle = ship.angle;
-      revThruster.render();
+      ship.updateThrusters();
+      
     }
 
     // Ship is exploding, advance the countdown or create a new ship if it is
@@ -1268,14 +1202,15 @@ public class Asteroids extends Applet implements Runnable, KeyListener {
 
       if (!paused && detail && Math.random() < 0.5) {
         if (up) {
-          offGraphics.drawPolygon(fwdThruster.sprite);
-          offGraphics.drawLine(fwdThruster.sprite.xpoints[fwdThruster.sprite.npoints - 1], fwdThruster.sprite.ypoints[fwdThruster.sprite.npoints - 1],
-                               fwdThruster.sprite.xpoints[0], fwdThruster.sprite.ypoints[0]);
+          
+          offGraphics.drawPolygon(ship.getForwardThruster().sprite);
+          offGraphics.drawLine(ship.getForwardThruster().sprite.xpoints[ship.getForwardThruster().sprite.npoints - 1], ship.getForwardThruster().sprite.ypoints[ship.getForwardThruster().sprite.npoints - 1],
+                  ship.getForwardThruster().sprite.xpoints[0], ship.getForwardThruster().sprite.ypoints[0]);
         }
         if (down) {
-          offGraphics.drawPolygon(revThruster.sprite);
-          offGraphics.drawLine(revThruster.sprite.xpoints[revThruster.sprite.npoints - 1], revThruster.sprite.ypoints[revThruster.sprite.npoints - 1],
-                               revThruster.sprite.xpoints[0], revThruster.sprite.ypoints[0]);
+          offGraphics.drawPolygon(ship.getReverseThruster().sprite);
+          offGraphics.drawLine(ship.getReverseThruster().sprite.xpoints[ship.getReverseThruster().sprite.npoints - 1], ship.getReverseThruster().sprite.ypoints[ship.getReverseThruster().sprite.npoints - 1],
+                  ship.getReverseThruster().sprite.xpoints[0], ship.getReverseThruster().sprite.ypoints[0]);
         }
       }
     }
