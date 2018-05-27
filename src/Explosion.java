@@ -1,6 +1,6 @@
 package src;
 
-public class Explosion extends AsteroidsSprite{
+public class Explosion extends AsteroidsSprites{
     
     public Explosion() {
         super();

@@ -7,7 +7,7 @@ import java.awt.Polygon;
   position, movement and rotation. It also can detemine if two objects collide.
 ******************************************************************************/
 
-abstract class AsteroidsSprite {
+public abstract class AsteroidsSprites {
 
   // Fields:
 
@@ -24,20 +24,19 @@ abstract class AsteroidsSprite {
                              // applying rotation and translation to get screen
                              // position. Used for drawing on the screen and in
                              // detecting collisions.
-
   // Constructors:
-
-  public AsteroidsSprite() {
-
-    this.shape = new Polygon();
-    this.active = false;
-    this.angle = 0.0;
-    this.deltaAngle = 0.0;
-    this.x = 0.0;
-    this.y = 0.0;
-    this.deltaX = 0.0;
-    this.deltaY = 0.0;
-    this.sprite = new Polygon();
+  
+  public AsteroidsSprites() {
+      super();
+      this.shape = new Polygon();
+      this.active = false;
+      this.angle = 0.0;
+      this.deltaAngle = 0.0;
+      this.x = 0.0;
+      this.y = 0.0;
+      this.deltaX = 0.0;
+      this.deltaY = 0.0;
+      this.sprite = new Polygon();
   }
 
   // Methods:
@@ -91,7 +90,7 @@ abstract class AsteroidsSprite {
                            (int) Math.round(this.shape.ypoints[i] * Math.cos(this.angle) - this.shape.xpoints[i] * Math.sin(this.angle)) + (int) Math.round(this.y) + height / 2);
   }
 
-  public boolean isColliding(AsteroidsSprite s) {
+  public boolean isColliding(AsteroidsSprites s) {
 
     int i;
 

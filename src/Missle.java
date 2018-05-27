@@ -1,7 +1,9 @@
 package src;
 
-public class Missle extends AsteroidsSprite{
+public class Missle extends AsteroidsSprites{
 
+    
+    
     public Missle() {
         super();
         shape.addPoint(0, -4);
@@ -11,6 +13,5 @@ public class Missle extends AsteroidsSprite{
         shape.addPoint(-2, 4);
         shape.addPoint(-1, 3);
         shape.addPoint(-1, -3);
-    }
-    
+    }   
 }

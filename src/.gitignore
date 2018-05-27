@@ -9,3 +9,8 @@
 /Asteroid.class
 /Explosion.class
 /Thruster$ThrusterType.class
+/Sound.class
+/Sounds.class
+/GameComponent.class
+/Assets.class
+/AsteroidsSprites.class

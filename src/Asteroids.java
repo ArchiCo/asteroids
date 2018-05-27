@@ -62,59 +62,6 @@ public class Asteroids extends Applet implements Runnable, KeyListener {
   Thread loadThread;
   Thread loopThread;
 
-  // Constants
-
-  static final int DELAY = 20;             // Milliseconds between screen and
-  static final int FPS   =                 // the resulting frame rate.
-    Math.round(1000 / DELAY);
-
-  static final int MAX_SHOTS =  8;          // Maximum number of sprites
-  static final int MAX_ROCKS =  8;          // for photons, asteroids and
-  static final int MAX_SCRAP = 40;          // explosions.
-
-  static final int SCRAP_COUNT  = 2 * FPS;  // Timer counter starting values
-  static final int HYPER_COUNT  = 3 * FPS;  // calculated using number of
-  static final int MISSLE_COUNT = 4 * FPS;  // seconds x frames per second.
-  static final int STORM_PAUSE  = 2 * FPS;
-
-  static final int    MIN_ROCK_SIDES =   6; // Ranges for asteroid shape, size
-  static final int    MAX_ROCK_SIDES =  16; // speed and rotation.
-  static final int    MIN_ROCK_SIZE  =  20;
-  static final int    MAX_ROCK_SIZE  =  40;
-  static final double MIN_ROCK_SPEED =  40.0 / FPS;
-  static final double MAX_ROCK_SPEED = 240.0 / FPS;
-  static final double MAX_ROCK_SPIN  = Math.PI / FPS;
-
-  static final int MAX_SHIPS = 3;           // Starting number of ships for
-                                            // each game.
-  static final int UFO_PASSES = 3;          // Number of passes for flying
-                                            // saucer per appearance.
-
-  // Ship's rotation and acceleration rates and maximum speed.
-
-  static final double SHIP_ANGLE_STEP = Math.PI / FPS;
-  static final double SHIP_SPEED_STEP = 15.0 / FPS;
-  static final double MAX_SHIP_SPEED  = 1.25 * MAX_ROCK_SPEED;
-
-  static final int FIRE_DELAY = 50;         // Minimum number of milliseconds
-                                            // required between photon shots.
-
-  // Probablility of flying saucer firing a missle during any given frame
-  // (other conditions must be met).
-
-  static final double MISSLE_PROBABILITY = 0.45 / FPS;
-
-  static final int BIG_POINTS    =  25;     // Points scored for shooting
-  static final int SMALL_POINTS  =  50;     // various objects.
-  static final int UFO_POINTS    = 250;
-  static final int MISSLE_POINTS = 500;
-
-  // Number of points the must be scored to earn a new ship or to cause the
-  // flying saucer to appear.
-
-  static final int NEW_SHIP_POINTS = 5000;
-  static final int NEW_UFO_POINTS  = 2750;
-
   // Background stars.
 
   int     numStars;
@@ -129,6 +76,7 @@ public class Asteroids extends Applet implements Runnable, KeyListener {
 
   // Flags for game state and options.
 
+ 
   boolean loaded = false;
   boolean paused;
   boolean playing;
@@ -146,11 +94,11 @@ public class Asteroids extends Applet implements Runnable, KeyListener {
 
   Ship ship;
   //AsteroidsSprite   fwdThruster, revThruster;
-  Ufo    ufo;
-  Missle missle;
-  Photon[] photons    = new Photon[MAX_SHOTS];
-  Asteroid[] asteroids  = new Asteroid[MAX_ROCKS];
-  Explosion[] explosions = new Explosion[MAX_SCRAP];
+  Ufo         ufo;
+  Missle      missle;
+  Photon[]    photons    = new Photon[Assets.MAX_SHOTS];
+  Asteroid[]  asteroids  = new Asteroid[Assets.MAX_ROCKS];
+  Explosion[] explosions = new Explosion[Assets.MAX_SCRAP];
 
   // Ship data.
 
@@ -174,25 +122,16 @@ public class Asteroids extends Applet implements Runnable, KeyListener {
 
   // Asteroid data.
 
-  boolean[] asteroidIsSmall = new boolean[MAX_ROCKS];    // Asteroid size flag.
+  boolean[] asteroidIsSmall = new boolean[Assets.MAX_ROCKS];    // Asteroid size flag.
   int       asteroidsCounter;                            // Break-time counter.
   double    asteroidsSpeed;                              // Asteroid speed.
   int       asteroidsLeft;                               // Number of active asteroids.
 
   // Explosion data.
 
-  int[] explosionCounter = new int[MAX_SCRAP];  // Time counters for explosions.
+  int[] explosionCounter = new int[Assets.MAX_SCRAP];  // Time counters for explosions.
   int   explosionIndex;                         // Next available explosion sprite.
 
-  // Sound clips.
-
-  AudioClip crashSound;
-  AudioClip explosionSound;
-  AudioClip fireSound;
-  AudioClip missleSound;
-  AudioClip saucerSound;
-  AudioClip thrustersSound;
-  AudioClip warpSound;
 
   // Flags for looping sound clips.
 
@@ -210,6 +149,8 @@ public class Asteroids extends Applet implements Runnable, KeyListener {
   Dimension offDimension;
   Image     offImage;
   Graphics  offGraphics;
+  
+  Sounds sounds;
 
   // Data for the screen font.
 
@@ -230,54 +171,26 @@ public class Asteroids extends Applet implements Runnable, KeyListener {
     Dimension d = getSize();
     int i;
 
-    // Display copyright information.
-
-    System.out.println(copyText);
-
-    // Set up key event handling and set focus to applet window.
-
-    addKeyListener(this);
+    System.out.println(copyText);  // Display copyright information.
+    addKeyListener(this);          // Set up key event handling and set focus to applet window.
     requestFocus();
-
-    // Save the screen size.
-
-    AsteroidsSprite.width = d.width;
-    AsteroidsSprite.height = d.height;
+    AsteroidsSprites.width  = d.width;  // Save the screen size.
+    AsteroidsSprites.height = d.height;
 
     // Generate the starry background.
-
-    numStars = AsteroidsSprite.width * AsteroidsSprite.height / 5000;
+    numStars = AsteroidsSprites.width * AsteroidsSprites.height / 5000;
     stars = new Point[numStars];
-    for (i = 0; i < numStars; i++)
-      stars[i] = new Point((int) (Math.random() * AsteroidsSprite.width), (int) (Math.random() * AsteroidsSprite.height));
+    for (i = 0; i < numStars; i++) stars[i] = new Point((int) (Math.random() * AsteroidsSprites.width ), 
+                                                        (int) (Math.random() * AsteroidsSprites.height));
 
-    // Create shape for the ship sprite.
-
-    ship = new Ship();
-
-    // Create shape for each photon sprites.
-
-    for (i = 0; i < MAX_SHOTS; i++) {
-      photons[i] = new Photon();
-    }
-    
-    // Create UFO object
-
-    ufo = new Ufo();
-
-    // Create shape for the guided missle.
-
-    missle = new Missle();
-
-    // Create asteroid sprites.
-
-    for (i = 0; i < MAX_ROCKS; i++)
-      asteroids[i] = new Asteroid();
-
-    // Create explosion sprites.
-
-    for (i = 0; i < MAX_SCRAP; i++)
-      explosions[i] = new Explosion();
+    sounds = new Sounds();
+    ship   = new Ship();    // Create shape for the ship sprite.
+    ufo    = new Ufo();     // Create UFO object
+    missle = new Missle();  // Create shape for the guided missle.
+      
+    for (i = 0; i < Assets.MAX_SHOTS; i++) photons[i]    = new Photon();    // Create shape for each photon sprites.
+    for (i = 0; i < Assets.MAX_ROCKS; i++) asteroids[i]  = new Asteroid();  // Create asteroid sprites.
+    for (i = 0; i < Assets.MAX_SCRAP; i++) explosions[i] = new Explosion(); // Create explosion sprites.
 
     // Initialize game data and put us in 'game over' mode.
 
@@ -293,10 +206,10 @@ public class Asteroids extends Applet implements Runnable, KeyListener {
     // Initialize game data and sprites.
 
     score = 0;
-    shipsLeft = MAX_SHIPS;
-    asteroidsSpeed = MIN_ROCK_SPEED;
-    newShipScore = NEW_SHIP_POINTS;
-    newUfoScore = NEW_UFO_POINTS;
+    shipsLeft = Assets.MAX_SHIPS;
+    asteroidsSpeed = Assets.MIN_ROCK_SPEED;
+    newShipScore = Assets.NEW_SHIP_POINTS;
+    newUfoScore = Assets.NEW_UFO_POINTS;
     initShip();
     initPhotons();
     stopUfo();
@@ -381,12 +294,12 @@ public class Asteroids extends Applet implements Runnable, KeyListener {
         if (score > highScore)
           highScore = score;
         if (score > newShipScore) {
-          newShipScore += NEW_SHIP_POINTS;
+          newShipScore += Assets.NEW_SHIP_POINTS;
           shipsLeft++;
         }
         if (playing && score > newUfoScore && !ufo.active) {
-          newUfoScore += NEW_UFO_POINTS;
-          ufoPassesLeft = UFO_PASSES;
+          newUfoScore += Assets.NEW_UFO_POINTS;
+          ufoPassesLeft = Assets.UFO_PASSES;
           initUfo();
         }
 
@@ -401,7 +314,7 @@ public class Asteroids extends Applet implements Runnable, KeyListener {
 
       repaint();
       try {
-        startTime += DELAY;
+        startTime += Assets.DELAY;
         Thread.sleep(Math.max(0, startTime - System.currentTimeMillis()));
       }
       catch (InterruptedException e) {
@@ -412,44 +325,7 @@ public class Asteroids extends Applet implements Runnable, KeyListener {
 
   public void loadSounds() {
 
-    // Load all sound clips by playing and immediately stopping them. Update
-    // counter and total for display.
-
-    try {
-      crashSound     = getAudioClip(new URL(getCodeBase(), "crash.au"));
-      clipTotal++;
-      explosionSound = getAudioClip(new URL(getCodeBase(), "explosion.au"));
-      clipTotal++;
-      fireSound      = getAudioClip(new URL(getCodeBase(), "fire.au"));
-      clipTotal++;
-      missleSound    = getAudioClip(new URL(getCodeBase(), "missle.au"));
-      clipTotal++;
-      saucerSound    = getAudioClip(new URL(getCodeBase(), "saucer.au"));
-      clipTotal++;
-      thrustersSound = getAudioClip(new URL(getCodeBase(), "thrusters.au"));
-      clipTotal++;
-      warpSound      = getAudioClip(new URL(getCodeBase(), "warp.au"));
-      clipTotal++;
-    }
-    catch (MalformedURLException e) {}
-
-    try {
-      crashSound.play();     crashSound.stop();     clipsLoaded++;
-      repaint(); Thread.currentThread().sleep(DELAY);
-      explosionSound.play(); explosionSound.stop(); clipsLoaded++;
-      repaint(); Thread.currentThread().sleep(DELAY);
-      fireSound.play();      fireSound.stop();      clipsLoaded++;
-      repaint(); Thread.currentThread().sleep(DELAY);
-      missleSound.play();    missleSound.stop();    clipsLoaded++;
-      repaint(); Thread.currentThread().sleep(DELAY);
-      saucerSound.play();    saucerSound.stop();    clipsLoaded++;
-      repaint(); Thread.currentThread().sleep(DELAY);
-      thrustersSound.play(); thrustersSound.stop(); clipsLoaded++;
-      repaint(); Thread.currentThread().sleep(DELAY);
-      warpSound.play();      warpSound.stop();      clipsLoaded++;
-      repaint(); Thread.currentThread().sleep(DELAY);
-    }
-    catch (InterruptedException e) {}
+    sounds.loadSounds();
   }
 
   public void initShip() {
@@ -459,7 +335,8 @@ public class Asteroids extends Applet implements Runnable, KeyListener {
     ship.initShip();
 
     if (loaded)
-    thrustersSound.stop();
+    
+    sounds.stopThrusters();
     thrustersPlaying = false;
     hyperCounter = 0;
   }
@@ -474,20 +351,20 @@ public class Asteroids extends Applet implements Runnable, KeyListener {
     // Rotate the ship if left or right cursor key is down.
 
     if (left) {
-      ship.angle += SHIP_ANGLE_STEP;
+      ship.angle += Assets.SHIP_ANGLE_STEP;
       if (ship.angle > 2 * Math.PI)
         ship.angle -= 2 * Math.PI;
     }
     if (right) {
-      ship.angle -= SHIP_ANGLE_STEP;
+      ship.angle -= Assets.SHIP_ANGLE_STEP;
       if (ship.angle < 0)
         ship.angle += 2 * Math.PI;
     }
 
     // Fire thrusters if up or down cursor key is down.
 
-    dx = SHIP_SPEED_STEP * -Math.sin(ship.angle);
-    dy = SHIP_SPEED_STEP *  Math.cos(ship.angle);
+    dx = Assets.SHIP_SPEED_STEP * -Math.sin(ship.angle);
+    dy = Assets.SHIP_SPEED_STEP *  Math.cos(ship.angle);
     if (up) {
       ship.deltaX += dx;
       ship.deltaY += dy;
@@ -501,9 +378,9 @@ public class Asteroids extends Applet implements Runnable, KeyListener {
 
     if (up || down) {
       speed = Math.sqrt(ship.deltaX * ship.deltaX + ship.deltaY * ship.deltaY);
-      if (speed > MAX_SHIP_SPEED) {
-        dx = MAX_SHIP_SPEED * -Math.sin(ship.angle);
-        dy = MAX_SHIP_SPEED *  Math.cos(ship.angle);
+      if (speed > Assets.MAX_SHIP_SPEED) {
+        dx = Assets.MAX_SHIP_SPEED * -Math.sin(ship.angle);
+        dy = Assets.MAX_SHIP_SPEED *  Math.cos(ship.angle);
         if (up)
           ship.deltaX = dx;
         else
@@ -538,7 +415,7 @@ public class Asteroids extends Applet implements Runnable, KeyListener {
       if (--shipCounter <= 0)
         if (shipsLeft > 0) {
           initShip();
-          hyperCounter = HYPER_COUNT;
+          hyperCounter = Assets.HYPER_COUNT;
         }
         else
           endGame();
@@ -547,11 +424,11 @@ public class Asteroids extends Applet implements Runnable, KeyListener {
   public void stopShip() {
 
     ship.active = false;
-    shipCounter = SCRAP_COUNT;
+    shipCounter = Assets.SCRAP_COUNT;
     if (shipsLeft > 0)
       shipsLeft--;
     if (loaded)
-      thrustersSound.stop();
+      sounds.stopThrusters();
     thrustersPlaying = false;
   }
 
@@ -559,7 +436,7 @@ public class Asteroids extends Applet implements Runnable, KeyListener {
 
     int i;
 
-    for (i = 0; i < MAX_SHOTS; i++)
+    for (i = 0; i < Assets.MAX_SHOTS; i++)
       photons[i].active = false;
     photonIndex = 0;
   }
@@ -570,7 +447,7 @@ public class Asteroids extends Applet implements Runnable, KeyListener {
 
     // Move any active photons. Stop it when its counter has expired.
 
-    for (i = 0; i < MAX_SHOTS; i++)
+    for (i = 0; i < Assets.MAX_SHOTS; i++)
       if (photons[i].active) {
         if (!photons[i].advance())
           photons[i].render();
@@ -586,14 +463,14 @@ public class Asteroids extends Applet implements Runnable, KeyListener {
     // Randomly set flying saucer at left or right edge of the screen.
 
     ufo.active = true;
-    ufo.x = -AsteroidsSprite.width / 2;
-    ufo.y = Math.random() * 2 * AsteroidsSprite.height - AsteroidsSprite.height;
+    ufo.x = -AsteroidsSprites.width / 2;
+    ufo.y = Math.random() * 2 * AsteroidsSprites.height - AsteroidsSprites.height;
     angle = Math.random() * Math.PI / 4 - Math.PI / 2;
-    speed = MAX_ROCK_SPEED / 2 + Math.random() * (MAX_ROCK_SPEED / 2);
+    speed = Assets.MAX_ROCK_SPEED / 2 + Math.random() * (Assets.MAX_ROCK_SPEED / 2);
     ufo.deltaX = speed * -Math.sin(angle);
     ufo.deltaY = speed *  Math.cos(angle);
     if (Math.random() < 0.5) {
-      ufo.x = AsteroidsSprite.width / 2;
+      ufo.x = AsteroidsSprites.width / 2;
       ufo.deltaX = -ufo.deltaX;
     }
     if (ufo.y > 0)
@@ -601,8 +478,8 @@ public class Asteroids extends Applet implements Runnable, KeyListener {
     ufo.render();
     saucerPlaying = true;
     if (sound)
-      saucerSound.loop();
-    ufoCounter = (int) Math.abs(AsteroidsSprite.width / ufo.deltaX);
+      sounds.loopSaucer();
+    ufoCounter = (int) Math.abs(AsteroidsSprites.width / ufo.deltaX);
   }
 
   public void updateUfo() {
@@ -623,13 +500,13 @@ public class Asteroids extends Applet implements Runnable, KeyListener {
       if (ufo.active) {
         ufo.advance();
         ufo.render();
-        for (i = 0; i < MAX_SHOTS; i++)
+        for (i = 0; i < Assets.MAX_SHOTS; i++)
           if (photons[i].active && ufo.isColliding(photons[i])) {
             if (sound)
-              crashSound.play();
+              sounds.playCrash();
             explode(ufo);
             stopUfo();
-            score += UFO_POINTS;
+            score += Assets.UFO_POINTS;
           }
 
           // On occassion, fire a missle at the ship if the saucer is not too
@@ -638,8 +515,8 @@ public class Asteroids extends Applet implements Runnable, KeyListener {
           d = (int) Math.max(Math.abs(ufo.x - ship.x), Math.abs(ufo.y - ship.y));
           if (ship.active && hyperCounter <= 0 &&
               ufo.active && !missle.active &&
-              d > MAX_ROCK_SPEED * FPS / 2 &&
-              Math.random() < MISSLE_PROBABILITY)
+              d > Assets.MAX_ROCK_SPEED * Assets.FPS / 2 &&
+              Math.random() < Assets.MISSLE_PROBABILITY)
             initMissle();
        }
     }
@@ -651,7 +528,7 @@ public class Asteroids extends Applet implements Runnable, KeyListener {
     ufoCounter = 0;
     ufoPassesLeft = 0;
     if (loaded)
-      saucerSound.stop();
+      sounds.stopSaucer();
     saucerPlaying = false;
   }
 
@@ -665,9 +542,9 @@ public class Asteroids extends Applet implements Runnable, KeyListener {
     missle.deltaX = 0.0;
     missle.deltaY = 0.0;
     missle.render();
-    missleCounter = MISSLE_COUNT;
+    missleCounter = Assets.MISSLE_COUNT;
     if (sound)
-      missleSound.loop();
+      sounds.loopMissle();
     misslePlaying = true;
   }
 
@@ -685,18 +562,18 @@ public class Asteroids extends Applet implements Runnable, KeyListener {
         guideMissle();
         missle.advance();
         missle.render();
-        for (i = 0; i < MAX_SHOTS; i++)
+        for (i = 0; i < Assets.MAX_SHOTS; i++)
           if (photons[i].active && missle.isColliding(photons[i])) {
             if (sound)
-              crashSound.play();
+              sounds.playCrash();
             explode(missle);
             stopMissle();
-            score += MISSLE_POINTS;
+            score += Assets.MISSLE_POINTS;
           }
         if (missle.active && ship.active &&
             hyperCounter <= 0 && ship.isColliding(missle)) {
           if (sound)
-            crashSound.play();
+            sounds.playCrash();
           explode(ship);
           stopShip();
           stopUfo();
@@ -739,8 +616,8 @@ public class Asteroids extends Applet implements Runnable, KeyListener {
 
     // Change the missle's angle so that it points toward the ship.
 
-    missle.deltaX = 0.75 * MAX_ROCK_SPEED * -Math.sin(missle.angle);
-    missle.deltaY = 0.75 * MAX_ROCK_SPEED *  Math.cos(missle.angle);
+    missle.deltaX = 0.75 * Assets.MAX_ROCK_SPEED * -Math.sin(missle.angle);
+    missle.deltaY = 0.75 * Assets.MAX_ROCK_SPEED *  Math.cos(missle.angle);
   }
 
   public void stopMissle() {
@@ -748,78 +625,33 @@ public class Asteroids extends Applet implements Runnable, KeyListener {
     missle.active = false;
     missleCounter = 0;
     if (loaded)
-      missleSound.stop();
+      sounds.stopMissle();
     misslePlaying = false;
   }
 
   public void initAsteroids() {
 
-    int i, j;
-    int s;
-    double theta, r;
-    int x, y;
-
     // Create random shapes, positions and movements for each asteroid.
 
-    for (i = 0; i < MAX_ROCKS; i++) {
+    for (int i = 0; i < Assets.MAX_ROCKS; i++) {
 
       // Create a jagged shape for the asteroid and give it a random rotation.
-
-      asteroids[i].shape = new Polygon();
-      s = MIN_ROCK_SIDES + (int) (Math.random() * (MAX_ROCK_SIDES - MIN_ROCK_SIDES));
-      for (j = 0; j < s; j ++) {
-        theta = 2 * Math.PI / s * j;
-        r = MIN_ROCK_SIZE + (int) (Math.random() * (MAX_ROCK_SIZE - MIN_ROCK_SIZE));
-        x = (int) -Math.round(r * Math.sin(theta));
-        y = (int)  Math.round(r * Math.cos(theta));
-        asteroids[i].shape.addPoint(x, y);
-      }
-      asteroids[i].active = true;
-      asteroids[i].angle = 0.0;
-      asteroids[i].deltaAngle = Math.random() * 2 * MAX_ROCK_SPIN - MAX_ROCK_SPIN;
-
-      // Place the asteroid at one edge of the screen.
-
-      if (Math.random() < 0.5) {
-        asteroids[i].x = -AsteroidsSprite.width / 2;
-        if (Math.random() < 0.5)
-          asteroids[i].x = AsteroidsSprite.width / 2;
-        asteroids[i].y = Math.random() * AsteroidsSprite.height;
-      }
-      else {
-        asteroids[i].x = Math.random() * AsteroidsSprite.width;
-        asteroids[i].y = -AsteroidsSprite.height / 2;
-        if (Math.random() < 0.5)
-          asteroids[i].y = AsteroidsSprite.height / 2;
-      }
-
-      // Set a random motion for the asteroid.
-
-      asteroids[i].deltaX = Math.random() * asteroidsSpeed;
-      if (Math.random() < 0.5)
-        asteroids[i].deltaX = -asteroids[i].deltaX;
-      asteroids[i].deltaY = Math.random() * asteroidsSpeed;
-      if (Math.random() < 0.5)
-        asteroids[i].deltaY = -asteroids[i].deltaY;
-
+      asteroids[i].createAsteroid();
       asteroids[i].render();
       asteroidIsSmall[i] = false;
     }
 
-    asteroidsCounter = STORM_PAUSE;
-    asteroidsLeft = MAX_ROCKS;
-    if (asteroidsSpeed < MAX_ROCK_SPEED)
+    asteroidsCounter = Assets.STORM_PAUSE;
+    asteroidsLeft = Assets.MAX_ROCKS;
+    if (asteroidsSpeed < Assets.MAX_ROCK_SPEED)
       asteroidsSpeed += 0.5;
   }
 
   public void initSmallAsteroids(int n) {
 
     int count;
-    int i, j;
-    int s;
+    int i;
     double tempX, tempY;
-    double theta, r;
-    int x, y;
 
     // Create one or two smaller asteroids from a larger one using inactive
     // asteroids. The new asteroids will be placed in the same position as the
@@ -832,29 +664,13 @@ public class Asteroids extends Applet implements Runnable, KeyListener {
     tempY = asteroids[n].y;
     do {
       if (!asteroids[i].active) {
-        asteroids[i].shape = new Polygon();
-        s = MIN_ROCK_SIDES + (int) (Math.random() * (MAX_ROCK_SIDES - MIN_ROCK_SIDES));
-        for (j = 0; j < s; j ++) {
-          theta = 2 * Math.PI / s * j;
-          r = (MIN_ROCK_SIZE + (int) (Math.random() * (MAX_ROCK_SIZE - MIN_ROCK_SIZE))) / 2;
-          x = (int) -Math.round(r * Math.sin(theta));
-          y = (int)  Math.round(r * Math.cos(theta));
-          asteroids[i].shape.addPoint(x, y);
-        }
-        asteroids[i].active = true;
-        asteroids[i].angle = 0.0;
-        asteroids[i].deltaAngle = Math.random() * 2 * MAX_ROCK_SPIN - MAX_ROCK_SPIN;
-        asteroids[i].x = tempX;
-        asteroids[i].y = tempY;
-        asteroids[i].deltaX = Math.random() * 2 * asteroidsSpeed - asteroidsSpeed;
-        asteroids[i].deltaY = Math.random() * 2 * asteroidsSpeed - asteroidsSpeed;
-        asteroids[i].render();
+        asteroids[i].createSmallAsteroid(tempX, tempY);
         asteroidIsSmall[i] = true;
         count++;
         asteroidsLeft++;
       }
       i++;
-    } while (i < MAX_ROCKS && count < 2);
+    } while (i < Assets.MAX_ROCKS && count < 2);
   }
 
   public void updateAsteroids() {
@@ -863,7 +679,7 @@ public class Asteroids extends Applet implements Runnable, KeyListener {
 
     // Move any active asteroids and check for collisions.
 
-    for (i = 0; i < MAX_ROCKS; i++)
+    for (i = 0; i < Assets.MAX_ROCKS; i++)
       if (asteroids[i].active) {
         asteroids[i].advance();
         asteroids[i].render();
@@ -871,20 +687,20 @@ public class Asteroids extends Applet implements Runnable, KeyListener {
         // If hit by photon, kill asteroid and advance score. If asteroid is
         // large, make some smaller ones to replace it.
 
-        for (j = 0; j < MAX_SHOTS; j++)
+        for (j = 0; j < Assets.MAX_SHOTS; j++)
           if (photons[j].active && asteroids[i].active && asteroids[i].isColliding(photons[j])) {
             asteroidsLeft--;
             asteroids[i].active = false;
             photons[j].active = false;
             if (sound)
-              explosionSound.play();
+              sounds.playExplosion();
             explode(asteroids[i]);
             if (!asteroidIsSmall[i]) {
-              score += BIG_POINTS;
+              score += Assets.BIG_POINTS;
               initSmallAsteroids(i);
             }
             else
-              score += SMALL_POINTS;
+              score += Assets.SMALL_POINTS;
           }
 
         // If the ship is not in hyperspace, see if it is hit.
@@ -892,7 +708,7 @@ public class Asteroids extends Applet implements Runnable, KeyListener {
         if (ship.active && hyperCounter <= 0 &&
             asteroids[i].active && asteroids[i].isColliding(ship)) {
           if (sound)
-            crashSound.play();
+            sounds.playCrash();
           explode(ship);
           stopShip();
           stopUfo();
@@ -905,7 +721,7 @@ public class Asteroids extends Applet implements Runnable, KeyListener {
 
     int i;
 
-    for (i = 0; i < MAX_SCRAP; i++) {
+    for (i = 0; i < Assets.MAX_SCRAP; i++) {
       explosions[i].shape = new Polygon();
       explosions[i].active = false;
       explosionCounter[i] = 0;
@@ -913,7 +729,7 @@ public class Asteroids extends Applet implements Runnable, KeyListener {
     explosionIndex = 0;
   }
 
-  public void explode(AsteroidsSprite s) {
+  public void explode(AsteroidsSprites s) {
 
     int c, i, j;
     int cx, cy;
@@ -928,7 +744,7 @@ public class Asteroids extends Applet implements Runnable, KeyListener {
       c = 1;
     for (i = 0; i < s.sprite.npoints; i += c) {
       explosionIndex++;
-      if (explosionIndex >= MAX_SCRAP)
+      if (explosionIndex >= Assets.MAX_SCRAP)
         explosionIndex = 0;
       explosions[explosionIndex].active = true;
       explosions[explosionIndex].shape = new Polygon();
@@ -946,10 +762,10 @@ public class Asteroids extends Applet implements Runnable, KeyListener {
       explosions[explosionIndex].x = s.x + cx;
       explosions[explosionIndex].y = s.y + cy;
       explosions[explosionIndex].angle = s.angle;
-      explosions[explosionIndex].deltaAngle = 4 * (Math.random() * 2 * MAX_ROCK_SPIN - MAX_ROCK_SPIN);
-      explosions[explosionIndex].deltaX = (Math.random() * 2 * MAX_ROCK_SPEED - MAX_ROCK_SPEED + s.deltaX) / 2;
-      explosions[explosionIndex].deltaY = (Math.random() * 2 * MAX_ROCK_SPEED - MAX_ROCK_SPEED + s.deltaY) / 2;
-      explosionCounter[explosionIndex] = SCRAP_COUNT;
+      explosions[explosionIndex].deltaAngle = 4 * (Math.random() * 2 * Assets.MAX_ROCK_SPIN - Assets.MAX_ROCK_SPIN);
+      explosions[explosionIndex].deltaX = (Math.random() * 2 * Assets.MAX_ROCK_SPEED - Assets.MAX_ROCK_SPEED + s.deltaX) / 2;
+      explosions[explosionIndex].deltaY = (Math.random() * 2 * Assets.MAX_ROCK_SPEED - Assets.MAX_ROCK_SPEED + s.deltaY) / 2;
+      explosionCounter[explosionIndex] = Assets.SCRAP_COUNT;
     }
   }
 
@@ -960,7 +776,7 @@ public class Asteroids extends Applet implements Runnable, KeyListener {
     // Move any active explosion debris. Stop explosion when its counter has
     // expired.
 
-    for (i = 0; i < MAX_SCRAP; i++)
+    for (i = 0; i < Assets.MAX_SCRAP; i++)
       if (explosions[i].active) {
         explosions[i].advance();
         explosions[i].render();
@@ -986,7 +802,7 @@ public class Asteroids extends Applet implements Runnable, KeyListener {
 
     if ((up || down) && ship.active && !thrustersPlaying) {
       if (sound && !paused)
-        thrustersSound.loop();
+        sounds.loopThrusters();
       thrustersPlaying = true;
     }
 
@@ -994,16 +810,16 @@ public class Asteroids extends Applet implements Runnable, KeyListener {
 
     if (e.getKeyChar() == ' ' && ship.active) {
       if (sound & !paused)
-        fireSound.play();
+        sounds.playFire();
       photonTime = System.currentTimeMillis();
       photonIndex++;
-      if (photonIndex >= MAX_SHOTS)
+      if (photonIndex >= Assets.MAX_SHOTS)
         photonIndex = 0;
       photons[photonIndex].active = true;
       photons[photonIndex].x = ship.x;
       photons[photonIndex].y = ship.y;
-      photons[photonIndex].deltaX = 2 * MAX_ROCK_SPEED * -Math.sin(ship.angle);
-      photons[photonIndex].deltaY = 2 * MAX_ROCK_SPEED *  Math.cos(ship.angle);
+      photons[photonIndex].deltaX = 2 * Assets.MAX_ROCK_SPEED * -Math.sin(ship.angle);
+      photons[photonIndex].deltaY = 2 * Assets.MAX_ROCK_SPEED *  Math.cos(ship.angle);
     }
 
     // Allow upper or lower case characters for remaining keys.
@@ -1014,11 +830,11 @@ public class Asteroids extends Applet implements Runnable, KeyListener {
     // starting counter.
 
     if (c == 'h' && ship.active && hyperCounter <= 0) {
-      ship.x = Math.random() * AsteroidsSprite.width;
-      ship.y = Math.random() * AsteroidsSprite.height;
-      hyperCounter = HYPER_COUNT;
+      ship.x = Math.random() * AsteroidsSprites.width;
+      ship.y = Math.random() * AsteroidsSprites.height;
+      hyperCounter = Assets.HYPER_COUNT;
       if (sound & !paused)
-        warpSound.play();
+        sounds.playWarp();
     }
 
     // 'P' key: toggle pause mode and start or stop any active looping sound
@@ -1027,19 +843,19 @@ public class Asteroids extends Applet implements Runnable, KeyListener {
     if (c == 'p') {
       if (paused) {
         if (sound && misslePlaying)
-          missleSound.loop();
+          sounds.loopMissle();
         if (sound && saucerPlaying)
-          saucerSound.loop();
+          sounds.loopSaucer();
         if (sound && thrustersPlaying)
-          thrustersSound.loop();
+          sounds.loopThrusters();
       }
       else {
         if (misslePlaying)
-          missleSound.stop();
+          sounds.stopMissle();
         if (saucerPlaying)
-          saucerSound.stop();
+          sounds.stopSaucer();
         if (thrustersPlaying)
-          thrustersSound.stop();
+          sounds.stopThrusters();
       }
       paused = !paused;
     }
@@ -1048,21 +864,21 @@ public class Asteroids extends Applet implements Runnable, KeyListener {
 
     if (c == 'm' && loaded) {
       if (sound) {
-        crashSound.stop();
-        explosionSound.stop();
-        fireSound.stop();
-        missleSound.stop();
-        saucerSound.stop();
-        thrustersSound.stop();
-        warpSound.stop();
+        sounds.stopCrash();
+        sounds.stopExplosion();
+        sounds.stopFire();
+        sounds.stopMissle();
+        sounds.stopSaucer();
+        sounds.stopThrusters();
+        sounds.stopWarp();
       }
       else {
         if (misslePlaying && !paused)
-          missleSound.loop();
+          sounds.loopMissle();
         if (saucerPlaying && !paused)
-          saucerSound.loop();
+          sounds.loopSaucer();
         if (thrustersPlaying && !paused)
-          thrustersSound.loop();
+          sounds.loopThrusters();
       }
       sound = !sound;
     }
@@ -1100,7 +916,7 @@ public class Asteroids extends Applet implements Runnable, KeyListener {
       down = false;
 
     if (!up && !down && thrustersPlaying) {
-      thrustersSound.stop();
+      sounds.stopThrusters();
       thrustersPlaying = false;
     }
   }
@@ -1142,7 +958,7 @@ public class Asteroids extends Applet implements Runnable, KeyListener {
     // Draw photon bullets.
 
     offGraphics.setColor(Color.white);
-    for (i = 0; i < MAX_SHOTS; i++)
+    for (i = 0; i < Assets.MAX_SHOTS; i++)
       if (photons[i].active)
         offGraphics.drawPolygon(photons[i].sprite);
 
@@ -1159,7 +975,7 @@ public class Asteroids extends Applet implements Runnable, KeyListener {
 
     // Draw the asteroids.
 
-    for (i = 0; i < MAX_ROCKS; i++)
+    for (i = 0; i < Assets.MAX_ROCKS; i++)
       if (asteroids[i].active) {
         if (detail) {
           offGraphics.setColor(Color.black);
@@ -1186,7 +1002,7 @@ public class Asteroids extends Applet implements Runnable, KeyListener {
 
     // Draw the ship, counter is used to fade color to white on hyperspace.
 
-    c = 255 - (255 / HYPER_COUNT) * hyperCounter;
+    c = 255 - (255 / Assets.HYPER_COUNT) * hyperCounter;
     if (ship.active) {
       if (detail && hyperCounter == 0) {
         offGraphics.setColor(Color.black);
@@ -1217,9 +1033,9 @@ public class Asteroids extends Applet implements Runnable, KeyListener {
 
     // Draw any explosion debris, counters are used to fade color to black.
 
-    for (i = 0; i < MAX_SCRAP; i++)
+    for (i = 0; i < Assets.MAX_SCRAP; i++)
       if (explosions[i].active) {
-        c = (255 / SCRAP_COUNT) * explosionCounter [i];
+        c = (255 / Assets.SCRAP_COUNT) * explosionCounter [i];
         offGraphics.setColor(new Color(c, c, c));
         offGraphics.drawPolygon(explosions[i].sprite);
       }

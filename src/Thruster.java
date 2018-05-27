@@ -1,19 +1,15 @@
 package src;
 
-public class Thruster extends AsteroidsSprite{
+public class Thruster extends AsteroidsSprites{
     
     enum ThrusterType {
         FORWARD, REVERSE;
     }
     
-    public Thruster() {
-        super();
-    }
-    
-    // Create shapes for the ship thrusters.
-
     public Thruster(ThrusterType type) {
         super();
+        
+        // Create shapes for the ship thrusters.
         switch (type) {
             case FORWARD:
                 shape.addPoint(0, 12);
@@ -21,7 +17,7 @@ public class Thruster extends AsteroidsSprite{
                 shape.addPoint(0, 26);
                 shape.addPoint(3, 16);
                 break;
-            
+    
             case REVERSE:
                 shape.addPoint(-2, 12);
                 shape.addPoint(-4, 14);
@@ -34,5 +30,4 @@ public class Thruster extends AsteroidsSprite{
                 break;
         }
     }
-    
 }

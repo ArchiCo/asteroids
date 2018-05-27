@@ -1,6 +1,6 @@
 package src;
 
-public class Ufo extends AsteroidsSprite{
+public class Ufo extends AsteroidsSprites{
 
     public Ufo() {
         // Create shape for the flying saucer.

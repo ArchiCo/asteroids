@@ -2,13 +2,17 @@ package src;
 
 import src.Thruster.ThrusterType;
 
-public class Ship extends AsteroidsSprite{
+public class Ship extends AsteroidsSprites{
 
     Thruster fwdThruster = new Thruster(ThrusterType.FORWARD);
     Thruster revThruster = new Thruster(ThrusterType.REVERSE); 
     
     public Ship() {
         super();
+        createShip();
+    }
+    
+    public void createShip() {
         shape.addPoint(0, -10);
         shape.addPoint(7, 10);
         shape.addPoint(-7, 10);
